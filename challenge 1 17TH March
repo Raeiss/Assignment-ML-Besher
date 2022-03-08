@@ -1,0 +1,541 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "name": "Copy of Untitled1.ipynb",
+      "provenance": [],
+      "authorship_tag": "ABX9TyOKMX7CEGoDxo/qZtXna8Az",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/Raeiss/Assignment-ML-Besher/blob/main/challenge%201%2017TH%20March\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!pip install tensorflow-gpu==2.0.0-beta0 > /dev/null 2>&1\n",
+        "\n",
+        "import tensorflow as tf\n",
+        "import numpy as np\n",
+        "import matplotlib.pyplot as plt\n",
+        "%matplotlib inline\n",
+        "\n",
+        "print(\"TensorFlow executing eagerly: {}\".format(tf.executing_eagerly()))"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "mKHl_3wNZsuR",
+        "outputId": "ae7903fe-a99a-47e9-9165-14cc9bff6ea1"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "TensorFlow executing eagerly: True\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "k9xWNjAwTyct",
+        "outputId": "88928215-c802-4b74-bb83-e6533ec036ab"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Downloading data from https://storage.googleapis.com/tensorflow/tf-keras-datasets/train-labels-idx1-ubyte.gz\n",
+            "32768/29515 [=================================] - 0s 0us/step\n",
+            "40960/29515 [=========================================] - 0s 0us/step\n",
+            "Downloading data from https://storage.googleapis.com/tensorflow/tf-keras-datasets/train-images-idx3-ubyte.gz\n",
+            "26427392/26421880 [==============================] - 0s 0us/step\n",
+            "26435584/26421880 [==============================] - 0s 0us/step\n",
+            "Downloading data from https://storage.googleapis.com/tensorflow/tf-keras-datasets/t10k-labels-idx1-ubyte.gz\n",
+            "16384/5148 [===============================================================================================] - 0s 0us/step\n",
+            "Downloading data from https://storage.googleapis.com/tensorflow/tf-keras-datasets/t10k-images-idx3-ubyte.gz\n",
+            "4423680/4422102 [==============================] - 0s 0us/step\n",
+            "4431872/4422102 [==============================] - 0s 0us/step\n"
+          ]
+        }
+      ],
+      "source": [
+        "# Tensorflow has convenient modules for loading a number of standard datasets\n",
+        "fashion_mnist = tf.keras.datasets.fashion_mnist\n",
+        "(train_and_validation_images, train_and_validation_labels), (test_images, test_labels) = fashion_mnist.load_data()\n",
+        "\n",
+        "text_labels = ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat', 'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot']"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Construct a validation set from the last 10000 images and labels from\n",
+        "# train_and_validation_images and train_and_validation_labels\n",
+        "validation_images = train_and_validation_images[-10000:, :, :]\n",
+        "validation_labels = train_and_validation_labels[-10000:]\n",
+        "\n",
+        "# Construct a training set from the first 50000 images and labels.\n",
+        "train_images = train_and_validation_images[:50000, :, :]\n",
+        "train_labels = train_and_validation_labels[:50000]"
+      ],
+      "metadata": {
+        "id": "litgRUGuW1Bh"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "plt.figure()\n",
+        "random_index = np.random.randint(0, len(train_images))\n",
+        "plt.imshow(train_images[random_index], cmap='gray_r')\n",
+        "plt.colorbar()\n",
+        "numerical_label = train_labels[random_index]\n",
+        "text_description = text_labels[numerical_label]\n",
+        "plt.title('True Class: {} (\"{}\")'.format(numerical_label, text_description))\n",
+        "\n",
+        "plt.gca().grid(False)"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 281
+        },
+        "id": "qxpMLm_CXUAM",
+        "outputId": "02de1325-0018-4d86-ce10-b4332ef5734b"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "display_data",
+          "data": {
+            "image/png": "iVBORw0KGgoAAAANSUhEUgAAATEAAAEICAYAAAA3EMMNAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEgAACxIB0t1+/AAAADh0RVh0U29mdHdhcmUAbWF0cGxvdGxpYiB2ZXJzaW9uMy4yLjIsIGh0dHA6Ly9tYXRwbG90bGliLm9yZy+WH4yJAAAfmklEQVR4nO3dfZRdVZnn8e+PEELeSAgJAUlC7BBnCBCDFDQO0GAUB7QdYFYvBmZU7GGMzoIFdjszCjNrQHvRrY1A64zSKwyMgCgyS23TDi2mURvR4SXQ4TXYxKQSEpJKAoQUhJe8PPPHOQWXVN29b9W9Vfee5PdZ667cOs859+y6VXlq332es7ciAjOzqtqv3Q0wM2uGk5iZVZqTmJlVmpOYmVWak5iZVZqTmJlVmpNYRUkKSUe1ux2NkvRrSce3ux05kq6T9B/b3Q5rnJNYgqRXah67Jb1W8/W/G+ZzHy7pZkkbJPVKekbSlySNH87zDpake8uEun9in48BvRHxj+XXV5ePMyT9smY/SbpM0pOSXpW0TtL/kXRcC9rZLelDNV/PltRdE5tdhr4GXCnpgGbPaSPDSSwhIib0PYC1wMdqtt3Rt1/qP/BQSJoC/D9gLPD+iJgInAlMBua08lzNKBP56AZ2/SxwewP7fR24HLgMmAK8B/gb4KNDbeNgRcQG4BngX43UOa05TmJDUPYg1kn6gqSNwP+W9ClJ9++x31sf+SSNkfQ1SWsl9Uj6a0lj65ziT4Fe4OMR0Q0QEc9FxOUR8fgA7fmopH+UtE3Sc5KurokdKOk7kl6QtFXSw5Kml7FPSVpV9vRWD6Z3KWkScBXwXzL7HQAsBP4hs99c4BLgwoj4eUS8ERHbI+KOiPhK3zkl3SZps6Q1kv6bpP3K2BxJPy+/zy2S7pA0uYzdDswC/rbsRSfbDPySEUyc1qSI8KOBB9ANfKh8fgawE/gqMIaix/Qp4P49jgngqPL5DcASih7GROBvgb+oc64HgC9l2lP72mcAx1H8UZoP9ADnlrHPlOcaB4wCTgAOAsYD24B/Vu53OHBM+XwWsBWYlTj/N4E/AWaXbdm/zn7HAK828P5+FliT2ec24Mfl+zcb+Cfg4jJ2FEVvdQwwDbgP+KuBfn4NtOVfA4+2+3fOj8Ye7okN3W7gqih6DK+ldpQkYBHwJxHxYkT0An8OXFDnkEOADY02JCJ+GRFPRMTuKHpq3wNOL8M7ytc7KiJ2RcQjEbGt5ns4VtLYiNgQEU+Vr7c2IiZHxNo6308XcArwPxpo3mSKXmVO8nuWNIri/boiInqj6KFeB3yibPPKiFha/jw2A9fz9nswWL1lu60CnMSGbnNEvN7gvtMoekKPlB/ptgI/LbcP5AWKnlFDJP2+pF+UH7NepujVTC3DtwP3AHdKel7SX0oaHRGvAv+m3HeDpP8r6Z83cK79gG8Bl0fEzgaa9xJFzykn9z1PpRh/W1OzbQ1wRNmu6ZLulLRe0jbgO7z9HgzWRIqeqFWAk9jQ7Tn9x6sUiQoASYfVxLYAr1F8XJtcPiZFccFgIH8PnNc33tOA71J8VJ0ZEZOAvwYEEBE7IuJLETEP+BfAHwKfLGP3RMSZFMnjGeCmBs51ENAFfL8cD3y43L5O0mkD7L+SojN6ROZ17wVmlL28gWyh6FUeWbNtFrC+fP7nFD+T4yLiIODjlO9BaTDTtRwNPDaI/a2NnMRa5zHgGEkLJB0IXN0XiIjdFAniBkmHAkg6QtK/rPNa11Mki1slHVmz//WS5g+w/0TgxYh4XdJJwL/tC0j6gKTjyo9j2ygSwe6y53JOWbLxBvAKxcfLnJeBdwELysdHyu0nAA/uuXNEvEmRlJMf7SLiWYoe3vfKCycHlBclLpD0xYjYBdwFXCNpYvm+/ClFj6vvPXgFeLlMmP95j1P0AL/XwPdH2da/a3Bfa7d2D8pV5UH/gf11A+zzXyl6DM9R9ARqB98PpOgtrKJIJiuAyxLnexdwC7CRYozmGYqrgePKeO1r/xHFR6te4CfA/wS+U8YuBH5L0VPsAb4B7E/R+/oHiqS0leKK3LzymFkUCaHuwH5NO2eTGNgv9/ko8HcNvJYoSiyeArZT9LK+z9sXHA6mSFqby/f4vwP7lbFjgEfKdi8HPl/7MwLOoSiT2Qr8p0QbDgfWAQe0+3fOj8YeKn9wZsNK0q+BS6MseO1Ukq4DfhcR32p3W6wxTmJmVmkeEzOzSnMSM7NKcxIzs0pr6Y3LOVOnTo3Zs2eP5Cn3eRs2pAv/R40alYwfcEB6Moc333wzGd+9u37VxmGHHVY3ZkPT3d3Nli1blN+zPkmDGSi/JyLOauZ8zWoqiUk6i2LmgVHA/4ryRt16Zs+ezbJly5o5pQ3Sl7/85WR80qRJyXjuj053d3cy/vrr9W9q+MIXvpA8Nid3Uaq422vf0tVVr1Z42CTvipA0k+Ke1+kUpTiLI+Lr5SQFn6YolwG4MiLuLo+5ArgY2EVRhnRP6hxDTmJl8eQ3KW66XQc8LGlJRDw91Nc0s87Q6B+ABqobdgKfj4hHJU2kuPVuaRm7ISK+tsd551HcI3sMRa3k30t6TxTFzgNqZkzsJGBlRKyKoir7ToqCQjOruP3226+hR04UEws8Wj7vpSjyTt2Cdg5wZxQ38q+muG3tpGRbG/6u+juComq6z7qBGidpkaRlkpZt3rx5z7CZdSBJDT0G+ZqzgeN5+/a0SyU9LukWSQeX2xrKK7WG/epkRCyOiK6I6Jo2rd6kDWbWKRpNYGUSm9rXSSkfi+q85gTgB8DnopgK6kaKWYoXUEzBdN1Q29vMwP56YGbN1zN4e0YBM6uwQfSytkRE8mqCpNEUCeyOiPghQET01MRvorjnF4aQV5rpiT0MzJX07nIK4gsopoMxs4pr1cfJckLQm4EVEXF9zfbauePOA54sny8BLlAxnfu7gbnAQ6lzDLknFhE7JV1KMeHeKOCWKGcGraJOvly/Y8eOZPzBB/vNgPOW5cuXJ49dvXp1Mj5z5sxkvLc3PWnrmDFj6sYWLlyYPPbEE09MxvfFEoqR0sL39hSK2XefkNT3y3glcKGkBRRlF90U06gTEU9Jugt4muLK5iWpK5PQZJ1YWddxdzOvYWadRVJDVx4bERH3887JKfvUzRsRcQ1wTaPnGNGKfTOrhir1cp3EzKwfJzEzqzQnMTOrNCcxM6usVg7sjwQnMTPrxz2xCmrmh5aaMwvgoYeStXqsWLEiGV+7dsCFuN9y3HHH1Y1ddtllyWM//vGPJ+MvvfRSMr5mzZpk/Iorrqgbe+ONN5LHfvWrX03GTz89vcD3/PkDrW5XGDduXN2YOYmZWcU5iZlZZQ1lhop2chIzs36cxMys0nx10swqzT0xM6ssj4l1qGan2nniiSfqxn7+858njx09enQyfuihhybjc+bMScZTy6rlyj/e//73J+OPP/54Mv7e9743GU99LOnp6akbA5g6NbmQDr/5zW+S8fvuu69u7Oijj04e+7GPfSwZ39s5iZlZpTmJmVmleWDfzCrLY2JmVnlOYmZWaU5iZlZpTmJmVmlOYh2o2R/KY489Vjd2yCGHJI+dMmVKMp6bkmbs2LHJ+Lp16+rGfve73yWPzbXt5ptvTsZzS7bdfvvtdWPbt29PHvuhD30oGc/V140aNapu7Jlnnkkem1vqbsGCBcl4lXlSRDOrPPfEzKzSnMTMrNKcxMysslzsamaV5yRmZpXmq5NmVmnuiVVQqtYK0jVN06ZNSx67c+fOZDw319n++6d/TKl5t4499tjksVu3bm0qnprLDODyyy+vG8vNJ5arI8vN05aqv5sxY0by2H29TmyfSWKSuoFeYBewMyK6WtEoM2uvfSaJlT4QEVta8Dpm1iH2tSRmZnuZKg3sN9vSAH4m6RFJiwbaQdIiScskLdu8eXOTpzOz4dY3JtbIoxM0m8ROjYj3AWcDl0j6gz13iIjFEdEVEV25AXAz6wytSmKSZkr6haSnJT0l6fJy+xRJSyU9W/57cLldkr4haaWkxyW9L3eOppJYRKwv/90E/Ag4qZnXM7PO0MKe2E7g8xExDziZorMzD/gicG9EzAXuLb+GokM0t3wsAm7MnWDISUzSeEkT+54DHwaeHOrrmVnnaFUSi4gNEfFo+bwXWAEcAZwD3Fruditwbvn8HOC2KDwATJZ0eOoczQzsTwd+VH4j+wPfjYifNvF6bfXcc88l46l6qFy9Uq4OLDdfWO741NqS27ZtSx67du3aZHzlypXJ+JlnnpmMP/vss8l4ykEHHZSM5wafd+3aVTe2Y8eOIR8L8Oqrrybj48ePT8Y73SDGu6ZKWlbz9eKIWFznNWcDxwMPAtMjYkMZ2kiRT6BIcLX/GdeV2zZQx5CTWESsAtIrp5pZ5QxyUsQtjdSHSpoA/AD4XERsq02SERGS0n+pE6pzHdXMRkwrr05KGk2RwO6IiB+Wm3v6PiaW/24qt68HZtYcPqPcVpeTmJn108KrkwJuBlZExPU1oSXAReXzi4Af12z/ZHmV8mTg5ZqPnQNysauZ9dPCGrBTgE8AT0jquyH1SuArwF2SLgbWAOeXsbuBjwArge3AH+dO4CRmZu/QykLWiLgfqPdiHxxg/wAuGcw5nMTMrJ9OqcZvhJNY6c0330zGU2UOucv1L7/8cjKeWlqskeMnTZpUN5abSid3FWrhwoXJ+Pr1yTFXVq1aVTeWmw4nt5Rdbsm2VJnEuHHjksc+//zzyXjuZ151Vbp30knMzPpxT8zMKquTbu5uhJOYmfXjJGZmleYkZmaV5oF9M6ssj4mZWeU5iVVQbmqVVHzKlCnJY6dPn56M5+rAVq9enYyfcMIJdWO5WqvUcm+NyH1vmzZtqhvL1cc9+WR6errTTjstGZ8wYULd2JYt6bVtcnWDuSmOJk+enIx3OicxM6s0JzEzqzQnMTOrrEFOith2TmJm1o97YmZWaU5iZlZpTmJmVlkudq2o3PxQqfmncjVHuSXXDjzwwGT84IMPTsa7u7vrxubPn588NldH9tJLLyXjuTqz4447rm5s+fLldWON2H//9K9v6vUnTpyYPDZX+/fiiy8m47NmzUrGO52TmJlVmq9Omlll+eOkmVWek5iZVZqTmJlVmpOYmVWWbzsys8pzT6yCcvNHperIXnjhheSxv/rVr5Lxz372s8n4e97znmT8lVdeqRvL/UV96KGHkvHXXnstGT/33HOT8e3bt9eNzZkzJ3lsrsYtV3937bXX1o1dddVVyWNz61Lm3peqq1ISy/YZJd0iaZOkJ2u2TZG0VNKz5b/pakwzq5S+MovcoxM08sH328BZe2z7InBvRMwF7i2/NrO9xF6VxCLiPmDPeyzOAW4tn98KpD9TmFllNJrAOiWJDXVMbHpEbCifbwTqTrQuaRGwCKp/P5nZvqJKVyebbmkUo6t1R1gjYnFEdEVE17Rp05o9nZmNgCr1xIaaxHokHQ5Q/lt/SRszq5x9IYktAS4qn18E/Lg1zTGzdtvrxsQkfQ84A5gqaR1wFfAV4C5JFwNrgPOHs5Ejobe3NxkfPXp03ViqFgrgpJNOSsZzc3rl1jhMzUeWq2fK1aDl5jLLfe+p8+fm5Mqtx5maqwzglFNOqRvLtTs39JH7mVVdpySoRmSTWERcWCf0wRa3xcw6RKsG9iXdAvwhsCkiji23XQ18Gthc7nZlRNxdxq4ALgZ2AZdFxD3ZtrakpWa2V2nhx8lv07/OFOCGiFhQPvoS2DzgAuCY8phvSUovE4+TmJntoZVjYnXqTOs5B7gzIt6IiNXASiA9FoOTmJkNYBBJbKqkZTWPRQ2e4lJJj5e3NfYNvB4BPFezz7pyW5JvADezfgYxsL8lIroG+fI3An9GUV/6Z8B1wL8f5Gu8xUnMzPoZzquTEdFTc56bgJ+UX64HZtbsOqPcluQkVspdMk9drcmVCkyfXveuLCA/7UuuxCJlzJgxyXjulzX3vuzatSsZHzWq/rjsQQcd1NRrH3DAAcn4888/XzeWW+7t9ddfT8ZT0x9V3XBPiijp8JrbFs8D+mbIWQJ8V9L1wLuAuUB6riicxMxsAK3qidWpMz1D0gKKj5PdwGcAIuIpSXcBTwM7gUsiIv2XDCcxMxtAq5JYnTrTmxP7XwNcM5hzOImZWT97VcW+me17nMTMrLI66ebuRjiJmVk/VZoU0UnMzPpxT6wD5WqOcnVBu3fvrhvL1XF1daULmidPnpyM55aES9Vi5eqZUtP4AEyYMCEZz71vqXqsXA1a7n156aWXkvFUndiUKVOSx+am6mmmdq8KnMTMrLI8JmZmleckZmaV5oF9M6s098TMrLI8JmZmleckZmaV5iTWgXJ1P5MmTUrG77///rqxHTt2JI9dvz49r9sJJ5yQjKfqwHJy39d9992XjOfmSjv//PRqfanjc3N65ZabmzlzZjJ+6KGH1o3l5lnbsGFDMj5x4sRkvOqcxMyssoZ7UsRWcxIzs37cEzOzSnMSM7NKcxIzs0pzEjOzynKxq5lVnq9OdqDe3t5kfNq0acl4aj6ynp6eujGABQsWJOO5OrPc+oopubnIcrVWc+fOTca3bt2ajO/cubNuLFcnlptv7JBDDknGU/V3W7ZsSR6bm38uF6+6KvXEsulW0i2SNkl6smbb1ZLWS1pePj4yvM00s5HU95Ey9+gEjfQZvw2cNcD2GyJiQfm4u7XNMrN2aTSBdUoSy36cjIj7JM0e/qaYWafolATViGZG7y6V9Hj5cfPgejtJWiRpmaRlmzdvbuJ0ZjZS9ttvv4YenWCorbgRmAMsADYA19XbMSIWR0RXRHTlBs/NrDPsVR8nBxIRb12Ok3QT8JOWtcjM2qqTElQjhtQTk3R4zZfnAU/W29fMqmev6olJ+h5wBjBV0jrgKuAMSQuAALqBzwxjG1siIpLx1LqSAKeffnrd2LXXXps89rDDDkvGczVHufUVc/VSKbl5sXJzmeXm/ErVuOXqwF5++eVkPFWDBnDsscfWjf36179OHrtw4cJkPPf7UnWdkqAa0cjVyQsH2HzzMLTFzDrEXpXEzGzf4kkRzazyqtQTq066NbMR06qB/Tq3LU6RtFTSs+W/B5fbJekbklaWNajva6StTmJm1k8Lr05+m/63LX4RuDci5gL3ll8DnA3MLR+LKOpRs5zEzKyfViWxiLgP2HPJq3OAW8vntwLn1my/LQoPAJP3KOca0D4zJpa7HJ+bsmbq1Kl1Yxs3bkwee/zxxyfjuelsmpmKJye3dNm4ceOS8dxSeCmjR49OxnMlGLnykNSSbY888kjy2LPPPjsZz/0+VdkI1IBNj4i+NfE2AtPL50cAz9Xst67cllw/b59JYmbWuEFcnZwqaVnN14sjYnGjB0dESEoXcWY4iZlZP4PoiW2JiK5BvnyPpMMjYkP5cXFTuX09UDtL54xyW5LHxMysn2G+7WgJcFH5/CLgxzXbP1lepTwZeLnmY2dd7omZ2Tu0ckyszm2LXwHuknQxsAY4v9z9buAjwEpgO/DHjZzDSczM+mlVEqtz2yLABwfYN4BLBnsOJzEz68e3HZlZZXXSNDuN2GeS2JtvvpmM52qx1q5dWzc2f/785LG5Jdtuv/32ZDxXT9VMHdnSpUuT8dw0PyeffHIynppOp9n/KKtWrUrGTz311LqxSZMmJY99/fXXk/Hce56rI8stV9duTmJmVmlOYmZWaU5iZlZpTmJmVlmeFNHMKs89MTOrNCcxM6s0J7EOlFtiKzc31QMPPFA3lpprrBG5pcmaqWl69dVXk8fOmzcvGR8/fnwyvmPHjmQ8teRb7meSm+vs+eefT8ZTdWK51eh7e3uT8dRcZVDtOjEXu5pZ5Xlg38wqzT0xM6s0JzEzqyyPiZlZ5TmJmVmlOYmZWaXtVVcnJc0EbqNYGy4olmT6uqQpwPeB2UA3cH5EvDR8TW3Orl27kvHc/FCbN2+uGzv99NOH1KZGjR07NhlPzTe2bdu25LG5eqncfGK5ebdytWApU6ZMScZfe+21Ib92rs4rVyd25JFHJuPNfN/tVrUxsUbS7U7g8xExDzgZuETSPOovRW5mFTfMqx21VDaJRcSGiHi0fN4LrKBYlbfeUuRmVnFVSmKDGhOTNBs4HniQ+kuRm1nFdUqCakTDSUzSBOAHwOciYlvtN5lailzSImARwKxZs5prrZmNiColsYYuQUgaTZHA7oiIH5abe8olyNljKfJ3iIjFEdEVEV25QWQza7++SREbeXSCbCtUpOSbgRURcX1NqN5S5GZWcXvbmNgpwCeAJyQtL7ddSf2lyDvS9u3bk/EJEyYk46lL5rnL9Tm5JdlyZQzjxo2rG8tNCZN77TVr1gz53JAuk0iVrUC+zCE3fVLK5MmTk/HcFEO5n1mn9FKGqlMSVCOySSwi7gfqfUf9liI3s+rbq5KYme1bOumjYiOcxMysnyp9HHYSM7N+3BMzs0pzEjOzyvKYmJlVnpNYB0otHQbwyiuvJOOpuqA5c+Ykj926dWsyvnHjxmQ8t2RbqqYpNyXMkiVLkvFcLdaJJ56YjKe+99z0SLm29/T0JOOpGrlcnVju9yG35Frue+t0TmJmVmmtvDopqRvoBXYBOyOiq5XzEVbnOqqZjYhGbzkaZG/tAxGxICK6yq9bNh+hk5iZ9TMC9062bD5CJzEz62cQSWyqpGU1j0UDvFwAP5P0SE28ZfMRekzMzPoZRC9rS81HxHpOjYj1kg4Flkp6pjaYmo+wEe6JmVk/rfw4GRHry383AT8CTqLB+Qgb4SRmZu/QykkRJY2XNLHvOfBh4ElaOB/hPvNx8o033kjGx4wZk4wfeOCBdWO5Oq5cTdJpp52WjOfmrkp9b+PHj08em6txy80XlpuHLVUvlVsmL1eLlVuyLXV87vv+7W9/m4zn6sBybcv9XNqthXVi04Efla+3P/DdiPippIdp0XyE+0wSM7PGtSqJRcQq4L0DbH+BFs1H6CRmZv24Yt/MKss3gJtZ5XlSRDOrNPfEzKzSnMTMrLI8JtahcmsY5urIUvOR5WqpchYuXNjU8TZ4hx12WDK+evXqZDxXJ5Zb57TTOYmZWaU5iZlZpfnqpJlVlsfEzKzynMTMrNKcxMys0pzEzKzS9qokJmkmcBvFvEABLI6Ir0u6Gvg0sLnc9cqIuHu4Gjrcxo4dm4yn6oJSc401Ire+4nBeKcqdezh/mZt97VytVqq2L2LIsyED+XnUUmuBdrq+SRGropGe2E7g8xHxaDlD4yOSlpaxGyLia8PXPDNrh72qJ1auSLKhfN4raQVwxHA3zMzap0pJbFB9RkmzgeOBB8tNl0p6XNItkg6uc8yivuWcNm/ePNAuZtZhRmDdyZZpOIlJmgD8APhcRGwDbgTmAAsoemrXDXRcRCyOiK6I6Jo2bVoLmmxmw2mYVgAfNg1dnZQ0miKB3RERPwSIiJ6a+E3AT4alhWY24qo0sJ9tqYp0ezOwIiKur9l+eM1u51Esw2Rme4G9rSd2CvAJ4AlJy8ttVwIXSlpAUXbRDXxmWFrYIuvXr0/GDznkkGT8qaeeqhtr9q9WO38ZqvQXt5Vy47OPPfZYMj5//vxkfNOm9FqwuSXj2q1TElQjGrk6eT8w0HdU2ZowM6uvk3pZjXDFvpn14yRmZpXmJGZmlbU33nZkZvsY98TMrNKcxMys0pzEOtBRRx2VjPf09CTjY8aMqRubOHHikNpkzWlm3Oboo49OxmfOnNlUfMaMGYNuUydxEjOzynKdmJlVnq9OmlmluSdmZpVWpSRWnT6jmY2IVs8nJuksSb+VtFLSF1vdXicxM+unVUlM0ijgm8DZwDyK2W/mtbKt/jhpZv20cGD/JGBlRKwCkHQncA7wdKtOoGaXrhrUyaTNwJqaTVOBLSPWgMHp1LZ1arvAbRuqVrbtyIhoah54ST+laFMjDgRer/l6cUQsrnmtPwLOioj/UH79CeD3I+LSZtpYa0R7Ynu+uZKWRUTXSLahUZ3atk5tF7htQ9VpbYuIs9rdhsHwmJiZDaf1QO3tDTPKbS3jJGZmw+lhYK6kd0s6ALgAWNLKE7R7YH9xfpe26dS2dWq7wG0bqk5uW1MiYqekS4F7gFHALRFRf8GKIRjRgX0zs1bzx0kzqzQnMTOrtLYkseG+DaEZkrolPSFpuaRlbW7LLZI2SXqyZtsUSUslPVv+e3AHte1qSevL9265pI+0qW0zJf1C0tOSnpJ0ebm9re9dol0d8b5V1YiPiZW3IfwTcCawjuLqxYUR0bIK3mZI6ga6IqLthZGS/gB4BbgtIo4tt/0l8GJEfKX8A3BwRHyhQ9p2NfBKRHxtpNuzR9sOBw6PiEclTQQeAc4FPkUb37tEu86nA963qmpHT+yt2xAi4k2g7zYE20NE3Ae8uMfmc4Bby+e3UvwnGHF12tYRImJDRDxaPu8FVgBH0Ob3LtEua0I7ktgRwHM1X6+js36QAfxM0iOSFrW7MQOYHhEbyucbgentbMwALpX0ePlxsy0fdWtJmg0cDzxIB713e7QLOux9qxIP7Pd3akS8j+Ku+0vKj00dKYqxgE6qkbkRmAMsADYA17WzMZImAD8APhcR22pj7XzvBmhXR71vVdOOJDbstyE0IyLWl/9uAn5E8fG3k/SUYyt9Yyyb2tyet0RET0TsiojdwE208b2TNJoiUdwRET8sN7f9vRuoXZ30vlVRO5LYsN+GMFSSxpcDrkgaD3wYeDJ91IhbAlxUPr8I+HEb2/IOfQmidB5teu9UTHR1M7AiIq6vCbX1vavXrk5536qqLRX75SXkv+Lt2xCuGfFGDEDS71H0vqC4Jeu77WybpO8BZ1BMi9IDXAX8DXAXMItiWqPzI2LEB9jrtO0Mio9EAXQDn6kZgxrJtp0K/Ap4Athdbr6SYvypbe9dol0X0gHvW1X5tiMzqzQP7JtZpTmJmVmlOYmZWaU5iZlZpTmJmVmlOYmZWaU5iZlZpf1/n0FgJUDQipIAAAAASUVORK5CYII=\n",
+            "text/plain": [
+              "<Figure size 432x288 with 2 Axes>"
+            ]
+          },
+          "metadata": {
+            "needs_background": "light"
+          }
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "batch_size = 128"
+      ],
+      "metadata": {
+        "id": "fbxkxJGTYbMr"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "train_ds = tf.data.Dataset.from_tensor_slices((train_images, train_labels))"
+      ],
+      "metadata": {
+        "id": "9SNnc_H-Yc58"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "train_ds = train_ds.map(lambda x, y: (tf.cast(x, tf.float32) / 255.0, tf.cast(y, tf.int32)))"
+      ],
+      "metadata": {
+        "id": "KXJu3iJ9aRbx"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "train_ds = train_ds.shuffle(buffer_size=batch_size * 10)"
+      ],
+      "metadata": {
+        "id": "6uy9_bKKbMU3"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "train_ds = train_ds.batch(batch_size)"
+      ],
+      "metadata": {
+        "id": "C7Uy-qiiXwpl"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "EHxnBJjRB_Rl",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 200
+        },
+        "outputId": "2202cbec-f4c0-4e0c-dd72-6aeaa7ad6408"
+      },
+      "source": [
+        "# Don't worry about this for now, we will use the validation set later\n",
+        "val_ds = tf.data.Dataset.from_tensor_slices((validation_images, validation_labels))\n",
+        "val_ds = val_ds.map(lambda x, y: (tf.cast(x, tf.float32) / 255.0, tf.cast(y, tf.int32)))"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "error",
+          "ename": "NameError",
+          "evalue": "ignored",
+          "traceback": [
+            "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
+            "\u001b[0;31mNameError\u001b[0m                                 Traceback (most recent call last)",
+            "\u001b[0;32m<ipython-input-2-f0ccb780263d>\u001b[0m in \u001b[0;36m<module>\u001b[0;34m()\u001b[0m\n\u001b[1;32m      1\u001b[0m \u001b[0;31m# Don't worry about this for now, we will use the validation set later\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m----> 2\u001b[0;31m \u001b[0mval_ds\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mtf\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mdata\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mDataset\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mfrom_tensor_slices\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mvalidation_images\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mvalidation_labels\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m      3\u001b[0m \u001b[0mval_ds\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mval_ds\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mmap\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;32mlambda\u001b[0m \u001b[0mx\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0my\u001b[0m\u001b[0;34m:\u001b[0m \u001b[0;34m(\u001b[0m\u001b[0mtf\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mcast\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mx\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mtf\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mfloat32\u001b[0m\u001b[0;34m)\u001b[0m \u001b[0;34m/\u001b[0m \u001b[0;36m255.0\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mtf\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mcast\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0my\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mtf\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mint32\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;31mNameError\u001b[0m: name 'tf' is not defined"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# RE-RUN THIS CELL if you want to restart training!\n",
+        "model = tf.keras.Sequential([\n",
+        "    # Convert the 28x28 image into a flat vector of 28x28 = 784 values\n",
+        "    tf.keras.layers.Flatten(input_shape=(28, 28), name='flatten_input'),\n",
+        "    # Create a \"hidden\" layer with 256 neurons and apply the ReLU non-linearity\n",
+        "    tf.keras.layers.Dense(256, activation=tf.nn.relu, name='input_to_hidden1'),\n",
+        "    # Create another hidden layer with 128 neurons\n",
+        "    tf.keras.layers.Dense(128, activation=tf.nn.relu, name='hidden1_to_hidden2'),\n",
+        "    # Create an \"output layer\" with 10 neurons\n",
+        "    tf.keras.layers.Dense(10, name='hidden_to_logits'),\n",
+        "])"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 234
+        },
+        "id": "61v-TXJGzJKJ",
+        "outputId": "685c71e3-1d0f-4978-e465-f43928556aa9"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "error",
+          "ename": "NameError",
+          "evalue": "ignored",
+          "traceback": [
+            "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
+            "\u001b[0;31mNameError\u001b[0m                                 Traceback (most recent call last)",
+            "\u001b[0;32m<ipython-input-1-df3fb353832c>\u001b[0m in \u001b[0;36m<module>\u001b[0;34m()\u001b[0m\n\u001b[1;32m      1\u001b[0m \u001b[0;31m# RE-RUN THIS CELL if you want to restart training!\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m----> 2\u001b[0;31m model = tf.keras.Sequential([\n\u001b[0m\u001b[1;32m      3\u001b[0m     \u001b[0;31m# Convert the 28x28 image into a flat vector of 28x28 = 784 values\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m      4\u001b[0m     \u001b[0mtf\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mkeras\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mlayers\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mFlatten\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0minput_shape\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;36m28\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0;36m28\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mname\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0;34m'flatten_input'\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m,\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m      5\u001b[0m     \u001b[0;31m# Create a \"hidden\" layer with 256 neurons and apply the ReLU non-linearity\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;31mNameError\u001b[0m: name 'tf' is not defined"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "model.summary()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 165
+        },
+        "id": "t9Xo9i4GzNVG",
+        "outputId": "272b8ffa-f0ef-4a93-bcb0-5fd0ca381e8f"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "error",
+          "ename": "NameError",
+          "evalue": "ignored",
+          "traceback": [
+            "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
+            "\u001b[0;31mNameError\u001b[0m                                 Traceback (most recent call last)",
+            "\u001b[0;32m<ipython-input-13-5f15418b3570>\u001b[0m in \u001b[0;36m<module>\u001b[0;34m()\u001b[0m\n\u001b[0;32m----> 1\u001b[0;31m \u001b[0mmodel\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0msummary\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m",
+            "\u001b[0;31mNameError\u001b[0m: name 'model' is not defined"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Choose an optimizer and loss function for training:\n",
+        "# The optimizer is responsible for controlling the learning rate\n",
+        "optimizer = tf.keras.optimizers.Adam()\n",
+        "loss_object = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)\n",
+        "\n",
+        "# Select metrics to measure the loss and the accuracy of the model. \n",
+        "# These metrics accumulate the values over epochs and then print the overall result.\n",
+        "train_loss = tf.keras.metrics.Mean(name='train_loss')\n",
+        "train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name='train_accuracy')\n",
+        "\n",
+        "num_epochs = 50  # The number of epochs to run\n",
+        "\n",
+        "# Lists to store the loss and accuracy of every epoch\n",
+        "train_losses = []\n",
+        "train_accuracies = []\n",
+        "\n",
+        "# Defined a function to train the model using tf.GradientTape\n",
+        "@tf.function\n",
+        "def train_step(image, label):\n",
+        "  # Initialise a GradientTape to track the operations\n",
+        "  with tf.GradientTape() as tape:\n",
+        "    # Compute the logits (un-normalised scores) of the current batch of examples\n",
+        "    # using the neural network architecture we defined earlier\n",
+        "    logits = model(image)\n",
+        "    loss = loss_object(label, logits)\n",
+        "  gradients = tape.gradient(loss, model.trainable_variables)\n",
+        "  optimizer.apply_gradients(zip(gradients, model.trainable_variables))\n",
+        "  \n",
+        "  # Add current batch loss to our loss metric tracker - note the function call semantics\n",
+        "  train_loss(loss)\n",
+        "  train_accuracy(label, logits)\n",
+        "\n",
+        "# Define a function to test the model\n",
+        "# @tf.function\n",
+        "# def val_step(image, label):\n",
+        "  # TODO\n",
+        "\n",
+        "for epoch in range(num_epochs):\n",
+        "  # Loop over our data pipeline\n",
+        "  for image, label in train_ds:\n",
+        "    train_step(image, label)\n",
+        "      \n",
+        "  template = 'Epoch {:03d}, Loss: {:.3f}, Accuracy: {:.3%}'\n",
+        "  print(template.format(epoch+1,\n",
+        "                        train_loss.result(), \n",
+        "                        train_accuracy.result()))\n",
+        "  \n",
+        "  train_losses.append(train_loss.result())\n",
+        "  train_accuracies.append(train_accuracy.result())"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 466
+        },
+        "id": "RcF35UyO2jFB",
+        "outputId": "b13d8a5d-f514-40ad-f6ef-b4d0fe63afce"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "error",
+          "ename": "NameError",
+          "evalue": "ignored",
+          "traceback": [
+            "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
+            "\u001b[0;31mNameError\u001b[0m                                 Traceback (most recent call last)",
+            "\u001b[0;32m<ipython-input-14-e12f32e85c92>\u001b[0m in \u001b[0;36m<module>\u001b[0;34m()\u001b[0m\n\u001b[1;32m     39\u001b[0m   \u001b[0;31m# Loop over our data pipeline\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m     40\u001b[0m   \u001b[0;32mfor\u001b[0m \u001b[0mimage\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mlabel\u001b[0m \u001b[0;32min\u001b[0m \u001b[0mtrain_ds\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m---> 41\u001b[0;31m     \u001b[0mtrain_step\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mimage\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mlabel\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m     42\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m     43\u001b[0m   \u001b[0mtemplate\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0;34m'Epoch {:03d}, Loss: {:.3f}, Accuracy: {:.3%}'\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;32m/usr/local/lib/python3.7/dist-packages/tensorflow/python/util/traceback_utils.py\u001b[0m in \u001b[0;36merror_handler\u001b[0;34m(*args, **kwargs)\u001b[0m\n\u001b[1;32m    151\u001b[0m     \u001b[0;32mexcept\u001b[0m \u001b[0mException\u001b[0m \u001b[0;32mas\u001b[0m \u001b[0me\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    152\u001b[0m       \u001b[0mfiltered_tb\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0m_process_traceback_frames\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0me\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0m__traceback__\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m--> 153\u001b[0;31m       \u001b[0;32mraise\u001b[0m \u001b[0me\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mwith_traceback\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mfiltered_tb\u001b[0m\u001b[0;34m)\u001b[0m \u001b[0;32mfrom\u001b[0m \u001b[0;32mNone\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m    154\u001b[0m     \u001b[0;32mfinally\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    155\u001b[0m       \u001b[0;32mdel\u001b[0m \u001b[0mfiltered_tb\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;32m/usr/local/lib/python3.7/dist-packages/tensorflow/python/framework/func_graph.py\u001b[0m in \u001b[0;36mautograph_handler\u001b[0;34m(*args, **kwargs)\u001b[0m\n\u001b[1;32m   1145\u001b[0m           \u001b[0;32mexcept\u001b[0m \u001b[0mException\u001b[0m \u001b[0;32mas\u001b[0m \u001b[0me\u001b[0m\u001b[0;34m:\u001b[0m  \u001b[0;31m# pylint:disable=broad-except\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m   1146\u001b[0m             \u001b[0;32mif\u001b[0m \u001b[0mhasattr\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0me\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0;34m\"ag_error_metadata\"\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m-> 1147\u001b[0;31m               \u001b[0;32mraise\u001b[0m \u001b[0me\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mag_error_metadata\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mto_exception\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0me\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m   1148\u001b[0m             \u001b[0;32melse\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m   1149\u001b[0m               \u001b[0;32mraise\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;31mNameError\u001b[0m: in user code:\n\n    File \"<ipython-input-14-e12f32e85c92>\", line 24, in train_step  *\n        logits = model(image)\n\n    NameError: name 'model' is not defined\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Plot the loss for all epochs using Matplotlib\n",
+        "plt.figure()\n",
+        "plt.plot(range(num_epochs), train_losses)\n",
+        "plt.title('Loss vs epochs')\n",
+        "\n",
+        "# Plot the accuracy for all epochs using Matplotlib\n",
+        "plt.figure()\n",
+        "plt.plot(range(num_epochs), train_accuracies)\n",
+        "plt.title('Accuracy vs epochs')"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 632
+        },
+        "id": "EW7YaZSk2qsg",
+        "outputId": "691c86fd-704c-4d74-a743-fe73485e473d"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "error",
+          "ename": "ValueError",
+          "evalue": "ignored",
+          "traceback": [
+            "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
+            "\u001b[0;31mValueError\u001b[0m                                Traceback (most recent call last)",
+            "\u001b[0;32m<ipython-input-15-4ec989f072f8>\u001b[0m in \u001b[0;36m<module>\u001b[0;34m()\u001b[0m\n\u001b[1;32m      1\u001b[0m \u001b[0;31m# Plot the loss for all epochs using Matplotlib\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m      2\u001b[0m \u001b[0mplt\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mfigure\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m----> 3\u001b[0;31m \u001b[0mplt\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mplot\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mrange\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mnum_epochs\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mtrain_losses\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m      4\u001b[0m \u001b[0mplt\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mtitle\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m'Loss vs epochs'\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m      5\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;32m/usr/local/lib/python3.7/dist-packages/matplotlib/pyplot.py\u001b[0m in \u001b[0;36mplot\u001b[0;34m(scalex, scaley, data, *args, **kwargs)\u001b[0m\n\u001b[1;32m   2761\u001b[0m     return gca().plot(\n\u001b[1;32m   2762\u001b[0m         *args, scalex=scalex, scaley=scaley, **({\"data\": data} if data\n\u001b[0;32m-> 2763\u001b[0;31m         is not None else {}), **kwargs)\n\u001b[0m\u001b[1;32m   2764\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m   2765\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;32m/usr/local/lib/python3.7/dist-packages/matplotlib/axes/_axes.py\u001b[0m in \u001b[0;36mplot\u001b[0;34m(self, scalex, scaley, data, *args, **kwargs)\u001b[0m\n\u001b[1;32m   1645\u001b[0m         \"\"\"\n\u001b[1;32m   1646\u001b[0m         \u001b[0mkwargs\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mcbook\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mnormalize_kwargs\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mkwargs\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mmlines\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mLine2D\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m-> 1647\u001b[0;31m         \u001b[0mlines\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0;34m[\u001b[0m\u001b[0;34m*\u001b[0m\u001b[0mself\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0m_get_lines\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m*\u001b[0m\u001b[0margs\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mdata\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0mdata\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0;34m**\u001b[0m\u001b[0mkwargs\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m]\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m   1648\u001b[0m         \u001b[0;32mfor\u001b[0m \u001b[0mline\u001b[0m \u001b[0;32min\u001b[0m \u001b[0mlines\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m   1649\u001b[0m             \u001b[0mself\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0madd_line\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mline\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;32m/usr/local/lib/python3.7/dist-packages/matplotlib/axes/_base.py\u001b[0m in \u001b[0;36m__call__\u001b[0;34m(self, *args, **kwargs)\u001b[0m\n\u001b[1;32m    214\u001b[0m                 \u001b[0mthis\u001b[0m \u001b[0;34m+=\u001b[0m \u001b[0margs\u001b[0m\u001b[0;34m[\u001b[0m\u001b[0;36m0\u001b[0m\u001b[0;34m]\u001b[0m\u001b[0;34m,\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    215\u001b[0m                 \u001b[0margs\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0margs\u001b[0m\u001b[0;34m[\u001b[0m\u001b[0;36m1\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m]\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m--> 216\u001b[0;31m             \u001b[0;32myield\u001b[0m \u001b[0;32mfrom\u001b[0m \u001b[0mself\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0m_plot_args\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mthis\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mkwargs\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m    217\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    218\u001b[0m     \u001b[0;32mdef\u001b[0m \u001b[0mget_next_color\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mself\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;32m/usr/local/lib/python3.7/dist-packages/matplotlib/axes/_base.py\u001b[0m in \u001b[0;36m_plot_args\u001b[0;34m(self, tup, kwargs)\u001b[0m\n\u001b[1;32m    340\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    341\u001b[0m         \u001b[0;32mif\u001b[0m \u001b[0mx\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mshape\u001b[0m\u001b[0;34m[\u001b[0m\u001b[0;36m0\u001b[0m\u001b[0;34m]\u001b[0m \u001b[0;34m!=\u001b[0m \u001b[0my\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mshape\u001b[0m\u001b[0;34m[\u001b[0m\u001b[0;36m0\u001b[0m\u001b[0;34m]\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m--> 342\u001b[0;31m             raise ValueError(f\"x and y must have same first dimension, but \"\n\u001b[0m\u001b[1;32m    343\u001b[0m                              f\"have shapes {x.shape} and {y.shape}\")\n\u001b[1;32m    344\u001b[0m         \u001b[0;32mif\u001b[0m \u001b[0mx\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mndim\u001b[0m \u001b[0;34m>\u001b[0m \u001b[0;36m2\u001b[0m \u001b[0;32mor\u001b[0m \u001b[0my\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mndim\u001b[0m \u001b[0;34m>\u001b[0m \u001b[0;36m2\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;31mValueError\u001b[0m: x and y must have same first dimension, but have shapes (50,) and (0,)"
+          ]
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "image/png": "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\n",
+            "text/plain": [
+              "<Figure size 432x288 with 1 Axes>"
+            ]
+          },
+          "metadata": {
+            "needs_background": "light"
+          }
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "images, labels = next(iter(train_ds))  # Get a batch of images and labels\n",
+        "\n",
+        "_logits = model(images, training=False)  # Pass the images to the model function and get its output logits\n",
+        "predicted_labels = tf.argmax(_logits, axis=1, output_type=tf.int32)\n",
+        "\n",
+        "img_indexs = np.arange(images.numpy().shape[0])\n",
+        "np.random.shuffle(img_indexs)\n",
+        "\n",
+        "plt.figure(figsize=(10,10))\n",
+        "for i in range(25):\n",
+        "    plt.subplot(5,5,i+1)\n",
+        "    plt.xticks([])\n",
+        "    plt.yticks([])\n",
+        "    plt.grid(False)\n",
+        "\n",
+        "    img_index = img_indexs[i]\n",
+        "    predicted_label = int(predicted_labels[img_index])\n",
+        "\n",
+        "    plt.imshow(images[img_index], cmap=\"gray_r\")\n",
+        "\n",
+        "    actual_label = int(labels[img_index].numpy())\n",
+        "    plt.xlabel(\"Actual: {} ({})\\n Predicted: {} ({})\".format(\n",
+        "        actual_label, text_labels[actual_label], predicted_label, text_labels[predicted_label]\n",
+        "    ))\n",
+        "\n",
+        "plt.tight_layout()\n",
+        "plt.show()"
+      ],
+      "metadata": {
+        "id": "X3LowPcX27lt"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# We need to apply the same pre-processing to the test set as we did to the training set\n",
+        "# Since we don't need batching or shuffling, we can do this directly instead of\n",
+        "# building a tf.Dataset pipeline\n",
+        "\n",
+        "tf_test_images = tf.convert_to_tensor(test_images, dtype=tf.float32) / 255.0\n",
+        "tf_test_labels = tf.convert_to_tensor(test_labels, dtype=tf.int32)"
+      ],
+      "metadata": {
+        "id": "kYxC3X4-3A3A"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "test_logits = model(tf_test_images, training=False)\n",
+        "\n",
+        "# Compute the average cross-entropy loss of the classification over the entire test set\n",
+        "test_loss = tf.keras.metrics.Mean(name='test_loss')\n",
+        "t_loss = loss_object(tf_test_labels, test_logits)\n",
+        "test_loss(t_loss)\n",
+        "\n",
+        "# Compare predicted labels to actual labels\n",
+        "test_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name='test_accuracy')\n",
+        "test_accuracy(tf_test_labels, test_logits)\n",
+        "\n",
+        "print('Completed testing on', tf_test_images.shape[0], 'examples...')\n",
+        "print('Loss: {:.3f}, Accuracy: {:.3%}'.format(test_loss.result(), test_accuracy.result()))"
+      ],
+      "metadata": {
+        "id": "4VZcFzMY3Fsl"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "test_predictions = tf.argmax(test_logits, axis=1, output_type=tf.int32)\n",
+        "\n",
+        "plt.figure(figsize=(10,10))\n",
+        "for i in range(25):\n",
+        "    plt.subplot(5,5,i+1)\n",
+        "    plt.xticks([])\n",
+        "    plt.yticks([])\n",
+        "    plt.grid(False)\n",
+        "\n",
+        "    img_index = np.random.randint(0, 10000)\n",
+        "    plt.imshow(test_images[img_index], cmap=\"gray_r\")\n",
+        "\n",
+        "    actual_label = int(test_labels[img_index])\n",
+        "    predicted_label = int(test_predictions[img_index])\n",
+        "\n",
+        "    plt.xlabel(\"Actual: {} ({})\\n Predicted: {} ({})\".format(\n",
+        "        actual_label, text_labels[actual_label], predicted_label, text_labels[predicted_label]\n",
+        "    ))\n",
+        "\n",
+        "plt.tight_layout()\n",
+        "plt.show()"
+      ],
+      "metadata": {
+        "id": "uKLDoG9y3o1_"
+      },
+      "execution_count": null,
+      "outputs": []
+    }
+  ]
+}
